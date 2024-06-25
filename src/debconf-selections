@@ -1,0 +1,11 @@
+# Remove LDAP from nsswitch.conf now?
+libnss-ldapd    libnss-ldapd/clean_nsswitch     boolean false
+libnss-ldapd:amd64      libnss-ldapd/clean_nsswitch     boolean false
+# Choices: passwd, group, shadow, hosts, networks, ethers, protocols, services, rpc, netgroup, aliases
+libnss-ldapd    libnss-ldapd/nsswitch   multiselect     passwd, group, shadow
+libnss-ldapd:amd64      libnss-ldapd/nsswitch   multiselect     passwd, group, shadow
+
+# FTP root directory:
+# vsftpd  vsftpd/directory        string  /srv/ftp
+# Dedicated system account for the vsftpd FTP daemon:
+# vsftpd  vsftpd/username string  ftpvi
