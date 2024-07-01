@@ -70,7 +70,7 @@ listen=YES
 
 # Configure passive mode
 pasv_enable=${PASV_ENABLE}
-# pasv_address=${PASV_ADDRESS}
+pasv_address=${PASV_ADDRESS}
 pasv_min_port=${PASV_MIN_PORT}
 pasv_max_port=${PASV_MAX_PORT}
 
