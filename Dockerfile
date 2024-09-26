@@ -1,4 +1,4 @@
-FROM debian:12.6
+FROM debian:12.7
 
 LABEL org.label-schema.build-date=FIXME \
       org.label-schema.license=MIT \
