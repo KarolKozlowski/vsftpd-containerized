@@ -1,10 +1,19 @@
 FROM debian:13.3
 
-LABEL org.label-schema.build-date=FIXME \
-      org.label-schema.license=MIT \
-      org.label-schema.name=vsftpd \
-      org.label-schema.vcs-ref=FIXME \
-      org.label-schema.vcs-url=https://github.com/karolkozlowski/vsftpd-containerized
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.license="MIT" \
+      org.label-schema.name="vsftpd" \
+      org.label-schema.vcs-ref="${VCS_REF}" \
+      org.label-schema.vcs-url="https://github.com/karolkozlowski/vsftpd-containerized" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/karolkozlowski/vsftpd-containerized" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.title="vsftpd" \
+      org.opencontainers.image.description="vsftpd FTP server with LDAP authentication" \
+      org.opencontainers.image.licenses="MIT"
 
 COPY src/debconf-selections /var/lib/debconf-selections
 RUN debconf-set-selections /var/lib/debconf-selections
