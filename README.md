@@ -4,25 +4,75 @@ A containerized vsftpd FTP server with LDAP authentication support.
 
 ## Features
 
-- 🔐 LDAP authentication via PAM
+- 🔐 Multiple authentication modes (LDAP, local users, virtual users)
 - 🔒 SSL/TLS encryption support
 - 🌍 Multi-platform support (amd64, arm64)
 - ⚙️ Extensive configuration via environment variables
 - 🐳 Docker and Docker Compose ready
 
-## Quick Start
+## Authentication Modes
 
-### Using Docker
+### LDAP Authentication (default)
 
 ```bash
 docker run -d \
   --name vsftpd \
   -p 21:21 \
   -p 40000-40100:40000-40100 \
+  -e AUTH_MODE=ldap \
   -e LDAP_URI=ldaps://ldap.example.com \
   -e LDAP_BASE=dc=example,dc=com \
   -e LDAP_BINDDN=cn=user,ou=technical,dc=example,dc=com \
   -e LDAP_BINDPW=yourpassword \
+  ghcr.io/karolkozlowski/vsftpd-containerized:latest
+```
+
+### Virtual Users (file-based authentication)
+
+```bash
+docker run -d \
+  --name vsftpd \
+  -p 21:21 \
+  -p 40000-40100:40000-40100 \
+  -e AUTH_MODE=virtual \
+  -e PASV_ADDRESS=your.server.ip.address \
+  ghcr.io/karolkozlowski/vsftpd-containerized:latest
+```
+
+Default credentials: `guest` / `guest123` (change in production!)
+
+Add additional users:
+
+```bash
+docker exec vsftpd htpasswd -bB /etc/vsftpd/virtual_users.passwd username password
+```
+
+Or mount an external password file:
+
+```bash
+# Create password file on host
+htpasswd -cbB virtual_users.passwd myuser mypassword
+htpasswd -bB virtual_users.passwd anotheruser anotherpass
+
+# Run container with mounted password file
+docker run -d \
+  --name vsftpd \
+  -p 21:21 \
+  -p 40000-40100:40000-40100 \
+  -v $(pwd)/virtual_users.passwd:/etc/vsftpd/virtual_users.passwd:ro \
+  -e AUTH_MODE=virtual \
+  -e PASV_ADDRESS=your.server.ip.address \
+  ghcr.io/karolkozlowski/vsftpd-containerized:latest
+```
+
+### Local System Users
+
+```bash
+docker run -d \
+  --name vsftpd \
+  -p 21:21 \
+  -p 40000-40100:40000-40100 \
+  -e AUTH_MODE=local \
   ghcr.io/karolkozlowski/vsftpd-containerized:latest
 ```
 
@@ -49,7 +99,13 @@ services:
 
 ## Environment Variables
 
-### LDAP Configuration
+### Authentication Mode
+
+| Variable        | Description                           | Default  |
+| --------------- | ------------------------------------- | -------- |
+| `AUTH_MODE`     | Authentication mode: `ldap`, `local`, or `virtual` | `ldap` |
+
+### LDAP Configuration (AUTH_MODE=ldap)
 
 | Variable        | Description                    | Default                                    |
 | --------------- | ------------------------------ | ------------------------------------------ |
@@ -59,6 +115,16 @@ services:
 | `LDAP_BINDPW`   | LDAP bind password             | `CHANGEME`                                 |
 | `NSLCD_DEBUG`   | Enable nslcd debug mode        | `no`                                       |
 | `FTP_GROUP`     | Restrict FTP access to group   | `ftpuser`                                  |
+
+### Virtual User Configuration (AUTH_MODE=virtual)
+
+| Variable               | Description                         | Default                          |
+| ---------------------- | ----------------------------------- | -------------------------------- |
+| `VIRTUAL_USERS_FILE`   | Path to htpasswd password file      | `/etc/vsftpd/virtual_users.passwd` |
+| `VIRTUAL_USER_HOME`    | Home directory for virtual users    | `/home/vftp`                     |
+| `VIRTUAL_USER_NAME`    | System user to map virtual users to | `vftp`                           |
+| `VIRTUAL_DEFAULT_USER` | Default username created on first run | `guest`                        |
+| `VIRTUAL_DEFAULT_PASS` | Default password for default user   | `guest123`                       |
 
 ### FTP Server Configuration
 
@@ -132,11 +198,33 @@ docker build -t vsftpd .
 
 ## Security Considerations
 
-- Always use strong passwords for LDAP bind credentials
+- **Virtual Users**: Change default credentials (`guest`/`guest123`) immediately in production
+- Always use strong passwords for LDAP bind credentials and FTP users
 - Use SSL/TLS with valid certificates in production
-- Restrict FTP access using `FTP_GROUP` environment variable
+- Restrict FTP access using `FTP_GROUP` environment variable (LDAP mode)
 - Regularly update the container image for security patches
 - Consider using SFTP instead of FTP for better security
+
+## Troubleshooting
+
+### Testing FTP Connection
+
+```bash
+# Test with lftp (supports SSL/TLS)
+lftp -u username,password -e "set ssl:verify-certificate no; ls; bye" your-server.com
+
+# Test without SSL (if SSL_ENABLE=NO)
+lftp -u username,password -e "set ftp:ssl-allow no; ls; bye" your-server.com
+```
+
+### Virtual User Authentication Not Working
+
+Ensure the virtual user system account exists. The container automatically creates it, but if you encounter issues:
+
+```bash
+docker exec vsftpd id vftp  # Should show user info
+docker exec vsftpd cat /etc/vsftpd/virtual_users.passwd  # Should show htpasswd entries
+```
 
 ## License
 
