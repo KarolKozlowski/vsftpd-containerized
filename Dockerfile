@@ -33,6 +33,7 @@ ENV LDAP_URI=ldaps://ldap.example.com \
     AUTH_MODE=ldap \
     VIRTUAL_USERS_FILE=/etc/vsftpd/virtual_users.passwd \
     VIRTUAL_USER_HOME=/home/vftp \
+    VIRTUAL_USER_NAME=vftp \
     VIRTUAL_DEFAULT_USER=guest \
     VIRTUAL_DEFAULT_PASS=guest123 \
     FTP_GROUP='ftpuser' \

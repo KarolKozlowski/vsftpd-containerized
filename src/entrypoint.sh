@@ -78,8 +78,14 @@ elif [ "${AUTH_MODE}" == "virtual" ]; then
   echo "Configuring virtual user authentication..."
 
   # Create virtual users directory
+  # Create virtual user system account for mapping
+  if ! id -u "${VIRTUAL_USER_NAME}" > /dev/null 2>&1; then
+    useradd -d "${VIRTUAL_USER_HOME}" -s /bin/false "${VIRTUAL_USER_NAME}"
+  fi
+
   mkdir -p $(dirname "${VIRTUAL_USERS_FILE}")
   mkdir -p "${VIRTUAL_USER_HOME}"
+  chown "${VIRTUAL_USER_NAME}:${VIRTUAL_USER_NAME}" "${VIRTUAL_USER_HOME}"
   chmod 755 "${VIRTUAL_USER_HOME}"
 
   # Create empty password file if it doesn't exist
@@ -129,6 +135,11 @@ anon_mkdir_write_enable=${ANON_MKDIR_WRITE_ENABLE}
 chroot_local_user=YES
 allow_writeable_chroot=YES
 secure_chroot_dir=/var/run/vsftpd/empty
+
+# Virtual user configuration (when AUTH_MODE=virtual)
+guest_enable=YES
+guest_username=${VIRTUAL_USER_NAME}
+virtual_use_local_privs=YES
 
 # Passive mode configuration
 pasv_enable=${PASV_ENABLE}
