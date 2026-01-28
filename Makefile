@@ -63,6 +63,20 @@ rebuild: clean build ## Clean and rebuild the image
 
 dev: rebuild run logs ## Build, run and show logs (for development)
 
+debug: build rm ## Run container in foreground with verbose debugging
+	@echo "Starting container in DEBUG mode with verbose logging..."
+	@echo "Press Ctrl+C to stop"
+	docker run --rm -it \
+		--name $(CONTAINER_NAME) \
+		$(PORTS) \
+		-e AUTH_MODE=virtual \
+		-e XFERLOG_ENABLE=YES \
+		-e LOG_FTP_PROTOCOL=YES \
+		-e DEBUG_SSL=YES \
+		-e PASV_ADDRESS=$$(hostname -I | awk '{print $$1}') \
+		-e FTPD_BANNER="[DEBUG MODE] Welcome to FTP service" \
+		$(IMAGE_NAME):$(TAG)
+
 test: run ## Build and run a quick test
 	@echo "Testing running container..."
 	@echo "Waiting for initialization (snakeoil cert generation)..."
