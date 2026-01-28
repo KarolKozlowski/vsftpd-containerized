@@ -25,10 +25,7 @@ run: build rm ## Run the container in detached mode
 	docker run -d \
 		--name $(CONTAINER_NAME) \
 		$(PORTS) \
-		-e LDAP_URI=ldaps://ldap.example.com \
-		-e LDAP_BASE=dc=example,dc=com \
-		-e LDAP_BINDDN=cn=user,ou=technical,dc=example,dc=com \
-		-e LDAP_BINDPW=changeme \
+		-e AUTH_MODE=virtual \
 		-e PASV_ADDRESS=$$(hostname -I | awk '{print $$1}') \
 		-e FTPD_BANNER="Welcome to local FTP service" \
 		$(IMAGE_NAME):$(TAG)
@@ -37,10 +34,7 @@ run-fg: build rm ## Run the container in foreground (interactive)
 	docker run --rm -it \
 		--name $(CONTAINER_NAME) \
 		$(PORTS) \
-		-e LDAP_URI=ldaps://ldap.example.com \
-		-e LDAP_BASE=dc=example,dc=com \
-		-e LDAP_BINDDN=cn=user,ou=technical,dc=example,dc=com \
-		-e LDAP_BINDPW=changeme \
+		-e AUTH_MODE=virtual \
 		-e PASV_ADDRESS=$$(hostname -I | awk '{print $$1}') \
 		-e FTPD_BANNER="Welcome to local FTP service" \
 		$(IMAGE_NAME):$(TAG)

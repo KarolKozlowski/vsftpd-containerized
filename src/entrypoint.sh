@@ -20,16 +20,20 @@ if [ -z "${RSA_CERT_FILE}" ] || [ -z "${RSA_PRIVATE_KEY_FILE}" ]; then
   # generate snakeoil certificate
 fi
 
-# configure ftp access group
-if [ -n "${FTP_GROUP}" ]; then
-  echo "Configuring access group: '${FTP_GROUP}'"
-  echo "${FTP_GROUP}" > /etc/ftpgroup
-  echo "# Allow login only from users in a specific group" >> /etc/pam.d/vsftpd
-  echo "auth    required        pam_listfile.so onerr=fail item=group sense=allow file=/etc/ftpgroup" >> /etc/pam.d/vsftpd
-fi
+# Configure authentication based on AUTH_MODE
+if [ "${AUTH_MODE}" == "ldap" ]; then
+  echo "Configuring LDAP authentication..."
 
-# nslcd
-cat > /etc/nslcd.conf <<EOF
+  # configure ftp access group
+  if [ -n "${FTP_GROUP}" ]; then
+    echo "Configuring access group: '${FTP_GROUP}'"
+    echo "${FTP_GROUP}" > /etc/ftpgroup
+    echo "# Allow login only from users in a specific group" >> /etc/pam.d/vsftpd
+    echo "auth    required        pam_listfile.so onerr=fail item=group sense=allow file=/etc/ftpgroup" >> /etc/pam.d/vsftpd
+  fi
+
+  # nslcd
+  cat > /etc/nslcd.conf <<EOF
 # /etc/nslcd.conf
 # nslcd configuration file. See nslcd.conf(5)
 # for details.
@@ -60,10 +64,52 @@ tls_cacertfile /etc/ssl/certs/ca-certificates.crt
 #scope sub
 EOF
 
-if [ "${NSLCD_DEBUG}" == "yes" ]; then
-  nslcd -d &
+  if [ "${NSLCD_DEBUG}" == "yes" ]; then
+    nslcd -d &
+  else
+    nslcd &
+  fi
+
+elif [ "${AUTH_MODE}" == "local" ]; then
+  echo "Using local user authentication (no LDAP)"
+  # Use standard PAM configuration for local users only
+
+elif [ "${AUTH_MODE}" == "virtual" ]; then
+  echo "Configuring virtual user authentication..."
+
+  # Create virtual users directory
+  mkdir -p $(dirname "${VIRTUAL_USERS_FILE}")
+  mkdir -p "${VIRTUAL_USER_HOME}"
+  chmod 755 "${VIRTUAL_USER_HOME}"
+
+  # Create empty password file if it doesn't exist
+  if [ ! -f "${VIRTUAL_USERS_FILE}" ]; then
+    echo "Creating virtual users file at ${VIRTUAL_USERS_FILE}"
+    touch "${VIRTUAL_USERS_FILE}"
+    chmod 600 "${VIRTUAL_USERS_FILE}"
+  fi
+
+  # If no users exist, create default guest account
+  if [ ! -s "${VIRTUAL_USERS_FILE}" ]; then
+    echo "No virtual users found, creating default guest account..."
+    echo "Username: ${VIRTUAL_DEFAULT_USER}"
+    echo "Password: ${VIRTUAL_DEFAULT_PASS}"
+    htpasswd -bB "${VIRTUAL_USERS_FILE}" "${VIRTUAL_DEFAULT_USER}" "${VIRTUAL_DEFAULT_PASS}"
+    echo "WARNING: Default credentials created! Change them in production!"
+  fi
+  
+  # Configure PAM for virtual users
+  cat > /etc/pam.d/vsftpd <<EOF
+# Virtual user authentication using pam_pwdfile
+auth required pam_pwdfile.so pwdfile=${VIRTUAL_USERS_FILE}
+account required pam_permit.so
+EOF
+
+  echo "Virtual user authentication configured"
+  echo "To add users, use: htpasswd -B ${VIRTUAL_USERS_FILE} username"
+
 else
-  nslcd &
+  echo "Warning: Unknown AUTH_MODE '${AUTH_MODE}', defaulting to local authentication"
 fi
 
 # vsftpd

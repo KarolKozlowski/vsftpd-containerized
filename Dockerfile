@@ -21,7 +21,7 @@ RUN debconf-set-selections /var/lib/debconf-selections
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update &&  \
-    apt-get install --no-install-recommends -y vsftpd libpam-ldapd libnss-ldap ssl-cert && \
+    apt-get install --no-install-recommends -y vsftpd libpam-ldapd libnss-ldap libpam-pwdfile apache2-utils ssl-cert && \
     rm -rf /var/lib/apt/lists/* && \
     rm -f /etc/ssl/private/ssl-cert-snakeoil.key /etc/ssl/certs/ssl-cert-snakeoil.pem
 
@@ -30,6 +30,11 @@ ENV LDAP_URI=ldaps://ldap.example.com \
     LDAP_BINDDN=cn=user,ou=technical,dc=example,dc=com \
     LDAP_BINDPW=CHANGEME \
     NSLCD_DEBUG=no \
+    AUTH_MODE=ldap \
+    VIRTUAL_USERS_FILE=/etc/vsftpd/virtual_users.passwd \
+    VIRTUAL_USER_HOME=/home/vftp \
+    VIRTUAL_DEFAULT_USER=guest \
+    VIRTUAL_DEFAULT_PASS=guest123 \
     FTP_GROUP='ftpuser' \
     ANONYMOUS_ENABLE=NO \
     WRITE_ENABLE=YES \
