@@ -136,11 +136,21 @@ chroot_local_user=YES
 allow_writeable_chroot=YES
 secure_chroot_dir=/var/run/vsftpd/empty
 
-# Virtual user configuration (when AUTH_MODE=virtual)
+EOF
+
+# Add virtual user configuration only when AUTH_MODE=virtual
+if [ "${AUTH_MODE}" == "virtual" ]; then
+  cat >> /etc/vsftpd.conf <<EOF
+
+# Virtual user configuration
 guest_enable=YES
 guest_username=${VIRTUAL_USER_NAME}
 virtual_use_local_privs=YES
 
+EOF
+fi
+
+cat >> /etc/vsftpd.conf <<EOF
 # Passive mode configuration
 pasv_enable=${PASV_ENABLE}
 pasv_address=${PASV_ADDRESS}
