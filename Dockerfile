@@ -18,9 +18,10 @@ LABEL org.label-schema.build-date="${BUILD_DATE}" \
 COPY src/debconf-selections /var/lib/debconf-selections
 RUN debconf-set-selections /var/lib/debconf-selections
 
-RUN apt-get -y update &&  \ 
+RUN apt-get -y update &&  \
     apt-get install --no-install-recommends -y vsftpd libpam-ldapd libnss-ldap ssl-cert && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/ssl/private/ssl-cert-snakeoil.key /etc/ssl/certs/ssl-cert-snakeoil.pem
 
 ENV LDAP_URI=ldaps://ldap.example.com \
     LDAP_BASE=dc=example,dc=com \
@@ -49,7 +50,7 @@ ENV LDAP_URI=ldaps://ldap.example.com \
     PASV_MIN_PORT=40000 \
     PASV_MAX_PORT=40100 \
     TZ=UTC
-    
+
 EXPOSE 21 $PASV_MIN_PORT-$PASV_MAX_PORT
 COPY --chown=root --chmod=750 src/entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
