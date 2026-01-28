@@ -5,9 +5,9 @@ set -e
 set -o pipefail
 
 # set timezone
-if [ ! -f /etc/timezone ] && [ ! -z "$TZ" ]; then
-  cp /usr/share/zoneinfo/$TZ /etc/localtime
-  echo $TZ >/etc/timezone
+if [ ! -f /etc/timezone ] && [ -n "$TZ" ]; then
+  cp "/usr/share/zoneinfo/${TZ}" "/etc/localtime"
+  echo "${TZ}" > /etc/timezone
 fi
 
 if [ -z "${RSA_CERT_FILE}" ] || [ -z "${RSA_PRIVATE_KEY_FILE}" ]; then
