@@ -185,6 +185,9 @@ log_ftp_protocol=${LOG_FTP_PROTOCOL}
 syslog_enable=${SYSLOG_ENABLE}
 vsftpd_log_file=${VSFTPD_LOG_FILE}
 
+# TCP wrappers
+tcp_wrappers=${TCPWRAPPERS_ENABLE}
+
 # Messages and banners
 dirmessage_enable=${DIRMESSAGE_ENABLE}
 ftpd_banner=${FTPD_BANNER}
@@ -237,11 +240,36 @@ SECURE_CHROOT_DIR=$(grep secure_chroot_dir /etc/vsftpd.conf | cut -d = -f 2)
 [ ! -d "${SECURE_CHROOT_DIR}" ] && mkdir -p "${SECURE_CHROOT_DIR}"
 
 # ensure proper permissions on the log file
-LOGFILE=/var/log/vsftpd.log
+LOGFILE=${VSFTPD_LOG_FILE}
 touch "${LOGFILE}"
 chmod 640 "${LOGFILE}"
 chown root:adm "${LOGFILE}"
 
-tail -f /var/log/vsftpd.log &
+# tcpwrappers baseline (allow by default; fail2ban adds deny entries)
+if [ "${TCPWRAPPERS_ENABLE}" == "YES" ]; then
+  echo "Configuring tcpwrappers files"
+  printf "# Managed by entrypoint\n" > /etc/hosts.allow
+  printf "# Managed by entrypoint\n" > /etc/hosts.deny
+fi
+
+# fail2ban
+if [ "${FAIL2BAN_ENABLE}" == "YES" ]; then
+  echo "Configuring fail2ban"
+  mkdir -p /etc/fail2ban/jail.d /var/run/fail2ban
+  cat > /etc/fail2ban/jail.d/vsftpd.local <<EOF
+[vsftpd]
+enabled = true
+port = ftp,ftp-data,ftps,ftps-data
+logpath = ${VSFTPD_LOG_FILE}
+maxretry = ${FAIL2BAN_MAXRETRY}
+findtime = ${FAIL2BAN_FINDTIME}
+bantime = ${FAIL2BAN_BANTIME}
+ignoreip = ${FAIL2BAN_IGNOREIP}
+action = hostsdeny
+EOF
+  fail2ban-server -x -f &
+fi
+
+tail -f "${LOGFILE}" &
 
 /usr/sbin/vsftpd /etc/vsftpd.conf

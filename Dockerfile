@@ -21,7 +21,7 @@ RUN debconf-set-selections /var/lib/debconf-selections
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update &&  \
-    apt-get install --no-install-recommends -y vsftpd libpam-ldapd libnss-ldap libpam-pwdfile apache2-utils ssl-cert && \
+    apt-get install --no-install-recommends -y vsftpd libpam-ldapd libnss-ldap libpam-pwdfile apache2-utils ssl-cert fail2ban tcpd libwrap0 && \
     rm -rf /var/lib/apt/lists/* && \
     rm -f /etc/ssl/private/ssl-cert-snakeoil.key /etc/ssl/certs/ssl-cert-snakeoil.pem
 
@@ -83,7 +83,13 @@ ENV LDAP_URI=ldaps://ldap.example.com \
     ASCII_DOWNLOAD_ENABLE=NO \
     SETPROCTITLE_ENABLE=NO \
     TEXT_USERDB_NAMES=NO \
+    TCPWRAPPERS_ENABLE=YES \
     FTPD_BANNER="Welcome to FTP service." \
+    FAIL2BAN_ENABLE=YES \
+    FAIL2BAN_BANTIME=600 \
+    FAIL2BAN_FINDTIME=600 \
+    FAIL2BAN_MAXRETRY=3 \
+    FAIL2BAN_IGNOREIP=127.0.0.1/8 \
     PASV_ENABLE=YES \
     PASV_ADDRESS= \
     PASV_MIN_PORT=40000 \
