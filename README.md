@@ -8,6 +8,7 @@ A containerized vsftpd FTP server with LDAP authentication support.
 - 🔒 SSL/TLS encryption support
 - 🌍 Multi-platform support (amd64, arm64)
 - ⚙️ Extensive configuration via environment variables
+- 🛡️ Fail2ban with TCP Wrappers support
 - 🐳 Docker and Docker Compose ready
 
 ## Authentication Modes
@@ -161,6 +162,17 @@ services:
 | `PASV_MIN_PORT`  | Passive mode minimum port     | `40000`  |
 | `PASV_MAX_PORT`  | Passive mode maximum port     | `40100`  |
 
+### Fail2ban and TCP Wrappers
+
+| Variable             | Description                              | Default      |
+| -------------------- | ---------------------------------------- | ------------ |
+| `FAIL2BAN_ENABLE`    | Enable fail2ban integration              | `YES`        |
+| `FAIL2BAN_BANTIME`   | Ban time (seconds)                       | `600`        |
+| `FAIL2BAN_FINDTIME`  | Find time window (seconds)               | `600`        |
+| `FAIL2BAN_MAXRETRY`  | Max retries before ban                   | `3`          |
+| `FAIL2BAN_IGNOREIP`  | Ignore IP ranges (comma-separated)       | `127.0.0.1/8` |
+| `TCPWRAPPERS_ENABLE` | Enable TCP Wrappers for vsftpd           | `YES`        |
+
 ### System Configuration
 
 | Variable | Description | Default |
@@ -202,6 +214,7 @@ docker build -t vsftpd .
 - Always use strong passwords for LDAP bind credentials and FTP users
 - Use SSL/TLS with valid certificates in production
 - Restrict FTP access using `FTP_GROUP` environment variable (LDAP mode)
+- Consider enabling fail2ban (default enabled) to mitigate brute force attempts
 - Regularly update the container image for security patches
 - Consider using SFTP instead of FTP for better security
 
