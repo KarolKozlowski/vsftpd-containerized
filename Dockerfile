@@ -1,4 +1,4 @@
-FROM debian:13.3
+FROM debian:13.3-slim
 
 ARG BUILD_DATE
 ARG VCS_REF
