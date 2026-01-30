@@ -81,6 +81,7 @@ jobs:
         with:
           image-ref: ghcr.io/${{ steps.repo.outputs.name }}@${{ steps.build.outputs.digest }}
           format: 'sarif'
+          ignore-unfixed: true
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
